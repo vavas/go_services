@@ -2,13 +2,13 @@
 package gnats
 
 import (
+	"go.uber.org/zap"
 	"strings"
 
 	"github.com/nats-io/nats.go"
 
 	"github.com/pkg/errors"
-
-	"bitbucket.org/telemetryapp/go_services/logger"
+	"github.com/vavas/go_services/logger"
 )
 
 var connection = &lockedConnection{}
@@ -50,7 +50,7 @@ func JSONConn() (*nats.EncodedConn, error) {
 // (after connected or re-connected).
 func AddOnActiveHandler(name string, onActiveHandler OnActiveHandler) {
 	if _, ok := onActiveHandlers[name]; ok {
-		logger.Logger.Fatalf("OnActiveHandler for '%s' has been registered", name)
+		logger.Logger.Sugar().Fatalf("OnActiveHandler for '%s' has been registered", name)
 	}
 	onActiveHandlers[name] = onActiveHandler
 }
@@ -87,16 +87,16 @@ func Connect(conf *Config) error {
 		// })
 		// )
 		nats.ClosedHandler(func(conn *nats.Conn) {
-			log.Debugf("nats connection closed: %s", conn.LastError())
+			log.Sugar().Debugf("nats connection closed: %s", conn.LastError())
 		}),
 		nats.ReconnectHandler(func(_ *nats.Conn) {
 			log.Debug("nats connection re-established")
 		}),
 		nats.DiscoveredServersHandler(func(conn *nats.Conn) {
-			log.Debugf("nats found new server at url %s", conn.ConnectedUrl())
+			log.Sugar().Debugf("nats found new server at url %s", conn.ConnectedUrl())
 		}),
 		nats.ErrorHandler(func(conn *nats.Conn, subscription *nats.Subscription, err error) {
-			log.Errorf(
+			log.Sugar().Errorf(
 				"nats communication error on subject %s: with server at %s",
 				subscription.Subject,
 				conn.ConnectedUrl(),
@@ -109,7 +109,8 @@ func Connect(conf *Config) error {
 
 	for name, onActiveHandler := range onActiveHandlers {
 		if err := onActiveHandler(); err != nil {
-			log.WithError(err).Errorf("Error running onActiveHandler '%s'", name)
+			log.Sugar().Errorf("Error running onActiveHandler '%s'", name,
+				zap.Error(err))
 		}
 	}
 
