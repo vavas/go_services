@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	"bitbucket.org/telemetryapp/go_log/services/database"
+	"github.com/vavas/go_services/db"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 
 	"testing"
@@ -199,8 +199,8 @@ func TestUnmarshalDateTimePtrISO(t *testing.T) {
 }
 
 func TestBSON(t *testing.T) {
-	database.TestConnect()
-	dbc := database.DB()
+	db.TestConnect()
+	dbc := db.DB()
 	defer dbc.Client().Disconnect(nil)
 
 	insertData := testDateTimeJSON{Now: DT{time.Now()}}
